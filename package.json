@@ -1,0 +1,35 @@
+{
+  "name": "@thejian/usegamepad",
+  "version": "1.0.0",
+  "description": "React hook for 🎮",
+  "exports": "./index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/theJian/useGamepad.git"
+  },
+  "files": [
+    "index.js",
+    "index.d.ts"
+  ],
+  "types": "index.d.ts",
+  "author": "thejian <hi@chabuduo.in>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/theJian/useGamepad/issues"
+  },
+  "homepage": "https://github.com/theJian/useGamepad#readme",
+  "devDependencies": {
+    "@types/react": "^19.1.8",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "typescript": "^5.8.3"
+  },
+  "peerDependencies": {
+    "react": "^19",
+    "react-dom": "^19"
+  }
+}
