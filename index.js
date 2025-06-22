@@ -1,14 +1,28 @@
 import { useCallback, useSyncExternalStore } from "react";
 
+const AXIS_MOVEMENT_THRESHOLD = 0.2; // Threshold for axis movement to be considered active
+
 /**
  * @typedef {Object} GamepadInfo
  * @property {boolean} connected
  * @property {boolean} [button0]
  * @property {boolean} [button1]
  * @property {boolean} [buttonN]
+ * @property {number} [axis0]
+ * @property {number} [axis1]
+ * @property {number} [axisN]
  */
 
-export default function useGamepad(index = 0) {
+/**
+ * Custom hook to access gamepad information.
+ * @param {number} [index=0] - The index of the gamepad to access.
+ * @return {GamepadInfo} The gamepad information for the specified index.
+ * @example
+ * const gamepad = useGamepad(0);
+ * console.log(gamepad.connected); // true or false
+ * console.log(gamepad.button0); // true or false
+ */
+export function useGamepad(index = 0) {
   return useSyncExternalStore(
     useCallback((callback) => subscribe(index, callback), [index]),
     () => gamepads[index] || defaultGamepadInfo,
@@ -39,6 +53,8 @@ function subscribe(index, callback) {
   function onDisconnect(e) {
     const gamepad = e.gamepad || e.detail.gamepad;
     delete gamepads[gamepad.index];
+
+    if (gamepad.index !== index) return;
     callback();
   }
 
@@ -73,7 +89,7 @@ function scanGamepads() {
 
     const gp = devices[i];
     if (gp.index in gamepads) {
-      updateGamepadInfo(gp);
+      gamepads[gp.index] = updateGamepadInfo(gp);
     }
   }
 }
@@ -91,11 +107,18 @@ function updateGamepadInfo(gamepad) {
   });
 
   gamepad.axes.forEach((axis, index) => {
-    // TODO
+    const axisValue =
+      Math.abs(axis) > AXIS_MOVEMENT_THRESHOLD ? axis : undefined; // Ignore axis if below threshold
+    gamepadInfo[`axis${index}`] = axisValue;
+
+    if (previousInfo[`axis${index}`] !== axis) {
+      changed = true;
+    }
   });
 
   if (changed || !previousInfo.connected) {
-    gamepads[gamepad.index] = gamepadInfo;
-    // TODO: Dispatch an event to notify subscribers
+	return gamepadInfo
   }
+
+  return previousInfo;
 }
