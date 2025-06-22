@@ -60,9 +60,7 @@ function scanGamepads() {
     if (!devices[i]) continue;
 
     const gp = devices[i];
-    if (gp.index in gamepads) {
-      gamepads[gp.index] = updateGamepadInfo(gp);
-    }
+    gamepads[gp.index] = updateGamepadInfo(gp);
   }
 }
 
