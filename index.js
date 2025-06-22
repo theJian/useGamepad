@@ -5,6 +5,8 @@ const AXIS_MOVEMENT_THRESHOLD = 0.2; // Threshold for axis movement to be consid
 /**
  * @typedef {Object} GamepadInfo
  * @property {boolean} connected
+ * @property {string} [id]
+ * @property {number} [index]
  * @property {boolean} [button0]
  * @property {boolean} [button1]
  * @property {boolean} [buttonN]
@@ -67,7 +69,11 @@ function scanGamepads() {
 function updateGamepadInfo(gamepad) {
   const previousInfo = gamepads[gamepad.index] || { connected: true };
   let changed = false;
-  const gamepadInfo = { connected: true };
+  const gamepadInfo = {
+    connected: true,
+    id: gamepad.id,
+    index: gamepad.index,
+  };
 
   gamepad.buttons.forEach((button, index) => {
     gamepadInfo[`button${index}`] = button.pressed;
@@ -87,7 +93,7 @@ function updateGamepadInfo(gamepad) {
   });
 
   if (changed || !previousInfo.connected) {
-	publishGamepadInfoUpdate(gamepad.index);
+    publishGamepadInfoUpdate(gamepad.index);
     return gamepadInfo;
   }
 
@@ -124,7 +130,7 @@ function subscribeGamepadInfo(index, callback) {
   window.addEventListener("gamepaddisconnected", onDisconnect);
 
   return () => {
-	window.removeEventListener("gamepadconnected", onConnect);
+    window.removeEventListener("gamepadconnected", onConnect);
     window.removeEventListener("gamepaddisconnected", onDisconnect);
     gamepadInfoListener[index] = gamepadInfoListener[index].filter(
       (cb) => cb !== callback,
@@ -134,6 +140,6 @@ function subscribeGamepadInfo(index, callback) {
 
 function publishGamepadInfoUpdate(index) {
   if (gamepadInfoListener[index]) {
-	gamepadInfoListener[index].forEach((callback) => callback());
+    gamepadInfoListener[index].forEach((callback) => callback());
   }
 }
