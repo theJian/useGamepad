@@ -24,7 +24,7 @@ const AXIS_MOVEMENT_THRESHOLD = 0.2; // Threshold for axis movement to be consid
  */
 export function useGamepad(index = 0) {
   return useSyncExternalStore(
-    useCallback((callback) => subscribe(index, callback), [index]),
+    useCallback((callback) => subscribeGamepadInfo(index, callback), [index]),
     () => gamepads[index] || defaultGamepadInfo,
   );
 }
@@ -36,36 +36,6 @@ let gamepads = {};
 const defaultGamepadInfo = {
   connected: false,
 };
-
-function subscribe(index, callback) {
-  function onConnect(e) {
-    const gamepad = e.gamepad || e.detail.gamepad;
-    if (gamepad.index !== index) return;
-
-    if (!loopStarted) {
-      loopStarted = true;
-      loop();
-    }
-
-    callback();
-  }
-
-  function onDisconnect(e) {
-    const gamepad = e.gamepad || e.detail.gamepad;
-    delete gamepads[gamepad.index];
-
-    if (gamepad.index !== index) return;
-    callback();
-  }
-
-  window.addEventListener("gamepadconnected", onConnect);
-  window.addEventListener("gamepaddisconnected", onDisconnect);
-
-  return () => {
-    window.removeEventListener("gamepadconnected", onConnect);
-    window.removeEventListener("gamepaddisconnected", onDisconnect);
-  };
-}
 
 let loopStarted = false;
 
@@ -117,8 +87,53 @@ function updateGamepadInfo(gamepad) {
   });
 
   if (changed || !previousInfo.connected) {
-	return gamepadInfo
+	publishGamepadInfoUpdate(gamepad.index);
+    return gamepadInfo;
   }
 
   return previousInfo;
+}
+
+const gamepadInfoListener = {};
+
+function subscribeGamepadInfo(index, callback) {
+  if (!gamepadInfoListener[index]) {
+    gamepadInfoListener[index] = [];
+  }
+  gamepadInfoListener[index].push(callback);
+
+  function onConnect(e) {
+    const gamepad = e.gamepad || e.detail.gamepad;
+
+    if (!loopStarted) {
+      loopStarted = true;
+      loop();
+    }
+
+    if (gamepad.index === index) callback();
+  }
+
+  function onDisconnect(e) {
+    const gamepad = e.gamepad || e.detail.gamepad;
+    delete gamepads[gamepad.index];
+
+    if (gamepad.index === index) callback();
+  }
+
+  window.addEventListener("gamepadconnected", onConnect);
+  window.addEventListener("gamepaddisconnected", onDisconnect);
+
+  return () => {
+	window.removeEventListener("gamepadconnected", onConnect);
+    window.removeEventListener("gamepaddisconnected", onDisconnect);
+    gamepadInfoListener[index] = gamepadInfoListener[index].filter(
+      (cb) => cb !== callback,
+    );
+  };
+}
+
+function publishGamepadInfoUpdate(index) {
+  if (gamepadInfoListener[index]) {
+	gamepadInfoListener[index].forEach((callback) => callback());
+  }
 }
